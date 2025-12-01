@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <script type="text/javascript" charset="utf-8" src="script.js">
+    </script>
+    <link rel="stylesheet" charset="utf-8" type="text/css" href="style.css" />
+    <title>Domineering</title>
+    <meta name="theme-color" content="#333" />
+    <meta name="viewport" content="initial-scale=1,minimum-scale=0.25" />
+  </head>
+  <body>
+    <div class="main" id="main">
+      <canvas id="canvas" width="150" height="150"></canvas>
+      <div class="settings" id="settings">
+        <select id="ai">
+          <option selected="selected" value="-1">Human vs Human</option>
+          <option value="0">Human vs COM</option>
+          <option value="1">COM vs Human</option>
+        </select>
+        &nbsp;
+        <select id="columns">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5" selected="selected">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        ×
+        <select id="rows">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5" selected="selected">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        &nbsp;
+        <input type="checkbox" id="misere" name="misere" /><label for="misere">Misère</label>
+        &nbsp;
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+  </body>
+</html>

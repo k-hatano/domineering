@@ -1,0 +1,64 @@
+
+body {
+	padding: 0;
+	margin: 0;
+}
+
+div#main {
+	display: flex;
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	background: #FFFFFF;
+	user-select: none;
+	overscroll-behavior-y: none;
+	flex-direction: column;
+}
+
+canvas#canvas {
+	width: 100%;
+	height: 90vh;
+	top: 0px;
+	flex: 1;
+	flex-grow: 1;
+}
+
+div#settings {
+	left: 0px;
+	bottom: 0px;
+	width: 100%;
+	min-height: 40px;
+	padding: 7px 0px;
+	text-align: center;
+	font-size: 14px;
+	background: #00000022;
+	line-height: 40px;
+}
+
+div#settings button, div#settings select {
+	background: #fffe;
+	border-radius: 32px;
+	padding: 4px 18px;
+	color: #111;
+	border: none;
+	font-size: 14px;
+	user-select: none;
+}
+
+div#settings button:active {
+	background: #666e;
+	color: #fff;
+}
+
+.hidden {
+	visibility: hidden !important;
+}
+
+.gone {
+	display: none !important;
+}
+
+div#settings button.darken {
+	background: #bbbe;
+}
