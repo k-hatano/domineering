@@ -1,5 +1,6 @@
 
 let gBoard = new Array(3);
+let gBoardScore = undefined;
 let gRows = 5;
 let gColumns = 5;
 let gMisere = false;
@@ -10,6 +11,8 @@ let gCursorX = undefined;
 let gCursorY = undefined;
 let gMessage = '';
 let gAIPlaying = false;
+let gSettingLastTouchTime = -1;
+let gCheatMode = false;
 
 onload = _ => {
   initialize();
@@ -55,15 +58,21 @@ function initialize() {
   document.getElementById('canvas').addEventListener('mousemove', mouseMoveOnCanvas);
   document.getElementById('canvas').addEventListener('mousedown', mouseDownOnCanvas);
   document.getElementById('reset').addEventListener('click', resetClicked);
+  document.getElementById('settings').addEventListener('mousedown', mouseDownOnSettings);
+  document.getElementById('settings').addEventListener('touchstart', mouseDownOnSettings);
+  document.getElementById('button_cheat_mode').addEventListener('click', cheatModeClicked);
   document.addEventListener('keydown', keyPressed);
 }
 
 function initBoard() {
   gBoard = new Array(gColumns);
+  gBoardScore = new Array(gColumns);
   for (let x = 0; x <= gColumns; x++) {
     gBoard[x] = new Array(gRows);
+    gBoardScore[x] = new Array(gRows);
     for (let y = 0; y <= gRows; y++) {
       gBoard[x][y] = 0;
+      gBoardScore[x][y] = 0;
     }
   }
   gPlaying = 1;
@@ -79,6 +88,9 @@ function rowsChanged(event) {
   gRows = parseInt(event.target.value);
   initBoard();
   drawCanvas();
+  if (gCheatMode) {
+      updateScore();
+  }
   if (gAI >= 0 && gPlaying % 2 == gAI) {
     playAIAsync();
   }
@@ -87,6 +99,9 @@ function rowsChanged(event) {
 function columnsChanged(event) {
   gColumns = parseInt(event.target.value);
   initBoard();
+  if (gCheatMode) {
+      updateScore();
+  }
   drawCanvas();
   if (gAI >= 0 && gPlaying % 2 == gAI) {
     playAIAsync();
@@ -96,6 +111,9 @@ function columnsChanged(event) {
 function aiChanged() {
   gAI = event.target.value;
   initBoard();
+  if (gCheatMode) {
+      updateScore();
+  }
   drawCanvas();
   if (gAI >= 0 && gPlaying % 2 == gAI) {
     playAIAsync();
@@ -105,6 +123,9 @@ function aiChanged() {
 function misereChanged() {
   gMisere = event.target.checked;
   initBoard();
+  if (gCheatMode) {
+      updateScore();
+  }
   drawCanvas();
   if (gAI >= 0 && gPlaying % 2 == gAI) {
     playAIAsync();
@@ -113,6 +134,9 @@ function misereChanged() {
 
 function resetClicked(event) {
   initBoard();
+  if (gCheatMode) {
+      updateScore();
+  }
   drawCanvas();
   if (gAI >= 0 && gPlaying % 2 == gAI) {
     playAIAsync();
@@ -219,6 +243,9 @@ function mouseDownOnCanvas(event) {
   let canvas = document.getElementById('canvas');
   let xy = getXYFromMousePosition(event.clientX, event.clientY, canvas.width, canvas.height, gColumns + 2, gRows + 2);
 
+  if (gPlaying < 0) {
+     return;
+  }
   if (gCursorX != undefined && gCursorY != undefined) {
     if (gPlaying % 2 == 1) {
       let x = Math.floor(gCursorX);
@@ -281,9 +308,14 @@ function playAt(x, y) {
         }
       }
       gMessage = winner + " wins!";
-      gPlaying = 0;
+      gPlaying = -1;
     }
+    gCursorX = undefined;
+    gCursorY = undefined;
     drawCanvas();
+    if (gCheatMode) {
+        updateScore();
+    }
     if (gPlaying != 0) {
       if (gAI >= 0 && gPlaying % 2 == gAI) {
         playAIAsync();
@@ -324,6 +356,49 @@ function drawCanvas() {
       } else if (gBoard[x][y] == 2) {
         ctx.fillStyle = "#0000FF";
         ctx.fillRect(xy.x, xy.y, boardUnits.unit, boardUnits.unit);
+      }
+    }
+  }
+  if (gCheatMode && gBoardScore != undefined) {
+    if (gPlaying % 2 == 0) {
+      for (let x = 0; x < gColumns - 1; x++) {
+        for (let y = 0; y < gRows; y++) {
+          let xy = getXYFromBoardUnits(boardUnits, x + 2, y + 1.65);
+          let score = gBoardScore[x][y];
+          if (score == undefined){
+            continue;
+          }
+          if (score > 0) {
+            ctx.fillStyle = "#A8A8FF";
+          } else if (score < 0) {
+            ctx.fillStyle = "#FFA8A8";
+          } else {
+            ctx.fillStyle = "#A8A8A8";
+          }
+          ctx.font = "" + (boardUnits.unit * 2 / 7) + "px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(score, xy.x, xy.y); 
+        }
+      }
+    } else {
+      for (let x = 0; x < gColumns; x++) {
+        for (let y = 0; y < gRows - 1; y++) {
+          let xy = getXYFromBoardUnits(boardUnits, x + 1.5, y + 2.15);
+          let score = gBoardScore[x][y];
+          if (score == undefined){
+            continue;
+          }
+          if (score > 0) {
+            ctx.fillStyle = "#FFA8A8";
+          } else if (score < 0) {
+            ctx.fillStyle = "#A8A8FF";
+          } else {
+            ctx.fillStyle = "#A8A8A8";
+          }
+          ctx.font = "" + (boardUnits.unit * 2 / 7) + "px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(score, xy.x, xy.y); 
+        }
       }
     }
   }
@@ -411,3 +486,77 @@ function getXYFromMousePosition(mouseX, mouseY, width, height, xMax, yMax) {
   return {x: x, y: y};
 }
 
+function mouseDownOnSettings(event) {
+  if (event.target.id != 'settings') {
+    gSettingTouchCount = 0;
+    return;
+  }
+
+  let touchInterval = Date.now() - gSettingLastTouchTime;
+  if (touchInterval < 500) {
+    gSettingTouchCount++;
+    if (gSettingTouchCount >= 3) {
+      if (document.getElementById('cheat_mode').className.indexOf('gone') >= 0) {
+        document.getElementById('cheat_mode').className = '';
+      } else {
+        document.getElementById('cheat_mode').className = 'gone';
+      }
+      gSettingTouchCount = 0;
+    }
+  } else {
+    gSettingTouchCount = 1;
+  }
+  gSettingLastTouchTime = Date.now();
+}
+
+function cheatModeClicked(event) {
+ if (gCheatMode) {
+    gCheatMode = false;
+    drawCanvas();
+    return;
+  } else {
+    gCheatMode = true;
+    updateScore();
+    drawCanvas();
+    return;
+  }
+}
+
+function updateScore() {
+  for (let x = 0; x <= gColumns; x++) {
+    for (let y = 0; y <= gRows; y++) {
+      gBoardScore[x][y] = undefined;
+    }
+  }
+
+  let playableMoves = getPlayableMoves();
+  if (playableMoves != undefined && playableMoves.length > 0) {
+    let index = 0;
+    let tmpBoard = new Array(gColumns);
+    for (let x = 0; x <= gColumns; x++) {
+      tmpBoard[x] = new Array(gRows);
+      for (let y = 0; y <= gRows; y++) {
+        tmpBoard[x][y] = gBoard[x][y];
+      }
+    }
+
+    let maxPlayableMovesCount = -gRows * gColumns * 2;
+    let maxPlayableMovesIndices = [];
+    for (let i = 0; i < playableMoves.length; i++) {
+      for (let x = 0; x <= gColumns; x++) {
+        for (let y = 0; y <= gRows; y++) {
+          tmpBoard[x][y] = gBoard[x][y];
+        }
+      }
+      playAtBoard(playableMoves[i].x, playableMoves[i].y, tmpBoard, gPlaying);
+      let positivePlayableMovesCount = getPlayableMoves(tmpBoard, gPlaying).length;
+      let negativePlayableMovesCount = getPlayableMoves(tmpBoard, gPlaying + 1).length;
+      if (gMisere) {
+        positivePlayableMovesCount *= -1;
+        negativePlayableMovesCount *= -1;
+      }
+      let playableMovesCount = positivePlayableMovesCount - negativePlayableMovesCount;
+      gBoardScore[playableMoves[i].x][playableMoves[i].y] = playableMovesCount;
+    }
+  }
+}
